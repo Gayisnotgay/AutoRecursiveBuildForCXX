@@ -1,0 +1,73 @@
+
+ifeq ($(HOST_BUILD_SYSTEM),Windows)
+PROJECT_ROOT_PATH := d:/JTang_Documents/01_c++/03_workspace/TestMakeHelloWorld
+SHARED_LIBRARY_SUFFIX := "dll"
+else
+PROJECT_ROOT_PATH := /mnt/d/JTang_Documents/01_c++/03_workspace/TestMakeHelloWorld
+SHARED_LIBRARY_SUFFIX := "so"
+endif
+
+PROJECT_BUILD_ROOT_PATH := $(realpath .)
+PROJECT_CODE_PATH := $(PROJECT_ROOT_PATH)/code
+PROJECT_INCLUDE_PATH := -I $(PROJECT_CODE_PATH)/Impl/Controller \
+                        -I $(PROJECT_CODE_PATH)/Impl/Function/Repeat \
+                        -I $(PROJECT_CODE_PATH)/Impl/Function/Reverse
+CPPFLAGS := -g -fPIC $(PROJECT_INCLUDE_PATH)
+CC := g++
+
+PROJECT_CPP_DIRECTORIES := Frame Impl/Controller Impl/Function/Repeat Impl/Function/Reverse Test
+_PROJECT_CPP_LIST_REALPATH = $(foreach dir,$(addprefix $(PROJECT_CODE_PATH)/,$(PROJECT_CPP_DIRECTORIES)),$(wildcard $(dir)/*.cpp))
+_PROJECT_CPP_LIST_RELATIVEPATH = $(subst $(PROJECT_CODE_PATH)/,,$(_PROJECT_CPP_LIST_REALPATH))
+PROJECT_OBJECT_LIST_RELATIVEPATH = $(patsubst %.cpp,%.o,$(_PROJECT_CPP_LIST_RELATIVEPATH))
+
+vpath %.o $(PROJECT_BUILD_ROOT_PATH)
+vpath %.so $(PROJECT_BUILD_ROOT_PATH)
+vpath %.cpp  $(PROJECT_CODE_PATH)
+vpath %.h $(PROJECT_CODE_PATH)
+ifeq ($(HOST_BUILD_SYSTEM),Windows)
+vpath %.a $(PROJECT_CODE_PATH) /mingw64/lib
+else
+vpath %.a $(PROJECT_CODE_PATH) /usr/local/lib
+endif
+
+.Phony: all clean print
+
+all: HelloWorld HelloWorld_gtest
+
+HelloWorld:$(filter %main.o,$(PROJECT_OBJECT_LIST_RELATIVEPATH)) -lImpl
+	$(CC) $(CPPFLAGS)  $^ -L . -Wl,-rpath=$(PROJECT_BUILD_ROOT_PATH)  -o $@
+
+HelloWorld_gtest: $(filter %test.o,$(PROJECT_OBJECT_LIST_RELATIVEPATH)) -lImpl -lgtest -lgtest_main 
+	$(CC) $(CPPFLAGS) $^ -L . -Wl,-rpath=$(PROJECT_BUILD_ROOT_PATH) -o $@
+
+-include Frame/main.d
+-include Impl/Controller/controller.d
+-include Impl/Function/Repeat/repeat.d
+-include Impl/Function/Reverse/reverse.d
+-include Test/test.d
+
+.SECONDEXPANSION:
+%.d : %.cpp | $$(@D)
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CPPFLAGS) $< -MT $(*).o -MF $@.$$$$; \
+	sed 's,\($*\).o[ :]\+,\1.d &,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-lImpl: Impl.a
+	$(CC) $(CPPFLAGS) -shared -o libImpl.$(SHARED_LIBRARY_SUFFIX) -Wl,-whole-archive $^ -Wl,-no-whole-archive 
+
+Impl.a: $(filter Impl%.o,$(PROJECT_OBJECT_LIST_RELATIVEPATH))
+	ar -cr $@ $^
+
+.SECONDEXPANSION:
+$(PROJECT_OBJECT_LIST_RELATIVEPATH): | $$(@D)
+
+$(PROJECT_CPP_DIRECTORIES):
+	mkdir -p $@
+
+clean:
+	rm -fr *
+
+print:
+	@echo $(PROJECT_CPP_DIRECTORIES)
+	echo "$(PROJECT_OBJECT_LIST_RELATIVEPATH)"

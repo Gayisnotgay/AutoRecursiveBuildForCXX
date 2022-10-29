@@ -1,0 +1,27 @@
+include $(PROJECT_MAKEFILES_PATH)/Makefile_utils
+
+CUR_DIR := $(realpath .)
+CUR_CXX_DIR :=  $(subst $(PROJECT_BUILD_ROOT_PATH),$(PROJECT_CODE_ROOT_PATH),$(CUR_DIR))
+CXX_SUBDIRS := $(call GetSubDirPaths,$(CUR_CXX_DIR))
+CUR_CXXPATH_LIST := $(call GetFilePathsInDir,$(CUR_CXX_DIR),cpp)
+CUR_CXXNAME_LIST := $(notdir $(CUR_CXXPATH_LIST))
+
+vpath %.cpp  $(CUR_CXX_DIR)
+
+all: $(CXX_SUBDIRS) $(patsubst %.cpp,%.o,$(CUR_CXXNAME_LIST))
+
+ifneq ($(CUR_CXXNAME_LIST),)
+-include $(patsubst %.cpp,%.d,$(CUR_CXXNAME_LIST))
+endif
+
+%.d: %.cpp
+	@set -e; rm -f $@; \
+	$(CC) $(CPPFLAGS) -c $< -MM -MT $*.o -MF $@.$$$$; \
+	sed 's,\($*\)\.o[ :],$@ \1\.o:,g' $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+ifneq ($(CXX_SUBDIRS),)
+$(CXX_SUBDIRS): $(PROJECT_CODE_STRUCTURE)
+	@mkdir -p $@;\
+	$(MAKE) -C $@ -f $(PROJECT_MAKEFILES_PATH)/Makefile_subdir;
+endif

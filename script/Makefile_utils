@@ -1,0 +1,19 @@
+# 获取给定目录下的子目录（不递归查找子目录）
+define GetSubDirPaths =
+$(subst /,,$(shell ls -AF $(1) | grep '\w*/'))
+endef
+
+# 获取给定目录下的所有子目录（递归查找子目录）
+define GetAllSubDirPaths =
+$(foreach DIR,$(1),$(filter $(DIR)/%,$(subst :,,$(shell ls -AR $(DIR) | grep ':$$'))))
+endef
+
+# 获取给定目录下的给定后缀名的所有文件（不递归查找子目录）
+define GetFilePathsInDir = 
+$(wildcard $(1)/*.$(2))
+endef
+
+# 获取给定目录下的给定后缀名的所有文件（递归查找子目录）
+define GetAllFilePathsInDir =
+$(foreach DIR,$(1) $(call GetAllSubDirPaths,$(1)),$(call GetFilePathsInDir,$(DIR),$(2)))
+endef
