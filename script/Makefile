@@ -44,20 +44,18 @@ export PROJECT_CODE_STRUCTURE := $(call GetAllSubDirPaths,$(addprefix $(CUR_CXX_
 
 vpath %.cpp  $(CUR_CXX_DIR)
 
-all: $(CXX_SUBDIRS) $(patsubst %.cpp,%.o,$(CUR_CXXNAME_LIST)) final
+final: $(CXX_SUBDIRS) $(patsubst %.cpp,%.o,$(CUR_CXXNAME_LIST))
+	@echo "All the cpp sourcefiles of the following directory(including subsirectories) have been compiled:";\
+	echo "$(CUR_CXX_DIR)";\
+	echo "Start to link";\
+	mkdir -p $@;\
+	$(MAKE) -C $@ -f $(PROJECT_MAKEFILES_PATH)/Makefile_$@;
 
 ifneq ($(CXX_SUBDIRS),)
 $(CXX_SUBDIRS): $(PROJECT_CODE_STRUCTURE)
 	@mkdir -p $@;\
 	$(MAKE) -C $@ -f $(PROJECT_MAKEFILES_PATH)/Makefile_subdir;
 endif
-
-final: $(PROJECT_CODE_STRUCTURE)
-	@echo "All the cpp sourcefiles of the following directory(including subsirectories) have been compiled:"
-	@echo "$(CUR_CXX_DIR)"
-	@echo "Start to link"
-	mkdir -p $@; \
-	$(MAKE) -C $@ -f $(PROJECT_MAKEFILES_PATH)/Makefile_$@
 
 ifneq ($(CUR_CXXNAME_LIST),)
 -include $(patsubst %.cpp,%.d,$(CUR_CXXNAME_LIST))
