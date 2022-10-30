@@ -8,6 +8,8 @@ CUR_CXXNAME_LIST := $(notdir $(CUR_CXXPATH_LIST))
 
 vpath %.cpp  $(CUR_CXX_DIR)
 
+.PHONY: all $(CXX_SUBDIRS)
+
 all: $(CXX_SUBDIRS) $(patsubst %.cpp,%.o,$(CUR_CXXNAME_LIST))
 
 ifneq ($(CUR_CXXNAME_LIST),)

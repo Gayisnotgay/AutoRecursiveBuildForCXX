@@ -44,6 +44,8 @@ export PROJECT_CODE_STRUCTURE := $(call GetAllSubDirPaths,$(addprefix $(CUR_CXX_
 
 vpath %.cpp  $(CUR_CXX_DIR)
 
+.PHONY: final $(CXX_SUBDIRS) clean print
+
 final: $(CXX_SUBDIRS) $(patsubst %.cpp,%.o,$(CUR_CXXNAME_LIST))
 	@echo "All the cpp sourcefiles of the following directory(including subsirectories) have been compiled:";\
 	echo "$(CUR_CXX_DIR)";\
@@ -66,8 +68,6 @@ endif
 	$(CC) $(CPPFLAGS) -c $< -MM -MT $*.o -MF $@.$$$$; \
 	sed 's,\($*\)\.o[ :],$@ \1\.o:,g' $@.$$$$ > $@; \
 	rm -f $@.$$$$;
-
-.PHONY: clean print
 
 clean:
 	rm -fr *

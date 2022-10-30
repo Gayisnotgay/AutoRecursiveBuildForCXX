@@ -4,23 +4,10 @@ CUR_DIR := $(realpath .)
 
 vpath %.o $(PROJECT_BUILD_ROOT_PATH)
 
-# GOOGLETEST的安装目录在msys2-mingw和linux上不一致
-vpath %.a $(if $(findstring linux,$(MAKE_HOST)),/usr/local/lib,/mingw64/lib)
+.PHONY: all
 
-all: SimpleHelloWorld HelloWorld HelloWorld_gtest
+all: SimpleHelloWorld 
 	@echo "$^ have been generated successfully"
 
-SimpleHelloWorld: $(filter-out $(PROJECT_BUILD_ROOT_PATH)/Test/%,$(PROJECT_EXPECTED_OBJECTPATH_LIST))
+SimpleHelloWorld: $(PROJECT_EXPECTED_OBJECTPATH_LIST)
 	$(CC) $(CPPFLAGS) $^ -o $@
-
-HelloWorld: $(filter $(PROJECT_BUILD_ROOT_PATH)/Frame/%,$(PROJECT_EXPECTED_OBJECTPATH_LIST)) -lImpl
-	$(CC) $(CPPFLAGS) $^ -L $(CUR_DIR) -Wl,-rpath=$(CUR_DIR) -o $@
-
-HelloWorld_gtest: $(filter $(PROJECT_BUILD_ROOT_PATH)/Test/%,$(PROJECT_EXPECTED_OBJECTPATH_LIST)) -lImpl -lgtest_main -lgtest
-	$(CC) $(CPPFLAGS) $^ -L $(CUR_DIR) -Wl,-rpath=$(CUR_DIR) -o $@
-
--lImpl: libImpl.a
-	$(CC) $(CPPFLAGS) -shared -Wl,-whole-archive $^ -Wl,-no-whole-archive -o libImpl.$(SHARED_LIBRARY_SUFFIX)
-
-libImpl.a:$(filter $(PROJECT_BUILD_ROOT_PATH)/Impl/%,$(PROJECT_EXPECTED_OBJECTPATH_LIST))
-	ar -cr $@ $^
